@@ -221,7 +221,7 @@ app = FastAPI(title="Portfolio API")
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://portfoliomanegement-production.up.railway.app",
+    "https://portfoliomanegement-production-e103.up.railway.app",
     "https://portfolio-manegement.vercel.app"
 ]
 
