@@ -19,27 +19,49 @@ class Portfolio:
         self.pos = pos0
         self.window = window
 
+    def _get_currency(self, ticker):
+        """Retourne la devise du ticker, avec mise en cache"""
+        if ticker not in self._currency_cache:
+            try:
+                info = yf.Ticker(ticker).info
+                self._currency_cache[ticker] = info.get("currency", "USD")
+            except Exception:
+                self._currency_cache[ticker] = "USD"
+        return self._currency_cache[ticker]
+
     def prices(self):
-        # --- Télécharger les prix ---
-        df = yf.download(self.tickers, start=self.start, end=self.end, progress=False, auto_adjust=True)['Close']
+        # --- Télécharger les prix ajustés de tous les tickers ---
+        df = yf.download(
+            self.tickers,
+            start=self.start,
+            end=self.end,
+            progress=False,
+            auto_adjust=True
+        )['Close']
         df = df.dropna(how='all').ffill()
 
-        '''# --- Récupérer la devise de chaque ticker ---
-        currencies = {}
-        for ticker in self.tickers:
-            info = yf.Ticker(ticker).info
-            currencies[ticker] = info.get("currency", "USD")  # default USD
-
         # --- Identifier les tickers non-USD ---
+        currencies = {t: self._get_currency(t) for t in self.tickers}
         non_usd_tickers = [t for t, cur in currencies.items() if cur != "USD"]
 
-        # --- Convertir chaque ticker non-USD en USD ---
-        for ticker in non_usd_tickers:
-            currency = currencies[ticker]
-            fx_ticker = f"{currency}USD=X"  # Exemple: EURUSD=X
-            fx = yf.download(fx_ticker, start=self.start, end=self.end, progress=False, auto_adjust=True)['Close']
-            fx = fx.ffill().reindex(df.index).fillna(method='ffill')  # aligner les dates
-            df[ticker] = df[ticker] * fx'''
+        if non_usd_tickers:
+            # --- Construire la liste des tickers FX nécessaires ---
+            fx_tickers = list(set(f"{currencies[t]}USD=X" for t in non_usd_tickers))
+            
+            # --- Télécharger tous les FX en une seule fois ---
+            fx_df = yf.download(
+                fx_tickers,
+                start=self.start,
+                end=self.end,
+                progress=False,
+                auto_adjust=True
+            )['Close']
+            fx_df = fx_df.ffill().reindex(df.index).fillna(method='ffill')
+
+            # --- Appliquer la conversion USD pour chaque ticker non-USD ---
+            for t in non_usd_tickers:
+                fx_ticker = f"{currencies[t]}USD=X"
+                df[t] = df[t] * fx_df[fx_ticker]
 
         return df
 
