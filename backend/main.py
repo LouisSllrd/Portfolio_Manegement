@@ -20,8 +20,27 @@ class Portfolio:
         self.window = window
 
     def prices(self):
+        # --- Télécharger les prix ---
         df = yf.download(self.tickers, start=self.start, end=self.end, progress=False, auto_adjust=True)['Close']
         df = df.dropna(how='all').ffill()
+
+        # --- Récupérer la devise de chaque ticker ---
+        currencies = {}
+        for ticker in self.tickers:
+            info = yf.Ticker(ticker).info
+            currencies[ticker] = info.get("currency", "USD")  # default USD
+
+        # --- Identifier les tickers non-USD ---
+        non_usd_tickers = [t for t, cur in currencies.items() if cur != "USD"]
+
+        # --- Convertir chaque ticker non-USD en USD ---
+        for ticker in non_usd_tickers:
+            currency = currencies[ticker]
+            fx_ticker = f"{currency}USD=X"  # Exemple: EURUSD=X
+            fx = yf.download(fx_ticker, start=self.start, end=self.end, progress=False, auto_adjust=True)['Close']
+            fx = fx.ffill().reindex(df.index).fillna(method='ffill')  # aligner les dates
+            df[ticker] = df[ticker] * fx
+
         return df
 
     def positions(self):
