@@ -1,34 +1,31 @@
 import yfinance as yf
-from datetime import datetime
+from datetime import datetime, timedelta
 
-ticker_symbol = "TSLA"
+ticker_symbol = "AAPL"
 
 try:
-    # 1. Récupérer le prix actuel avec fast_info
-    ticker = yf.Ticker(ticker_symbol)
-    fast_info = ticker.fast_info
-    current_price_fast_info = fast_info.last_price
-    currency = fast_info.currency
+    # Calculer la date d'il y a une semaine
+    end_date = datetime.now().date()
+    start_date = end_date - timedelta(days=7)
 
-    # 2. Récupérer le dernier prix de clôture avec history
-    data = ticker.history(period="1d")  # Dernier jour disponible
+    # Télécharger les données pour cette date précise
+    data = yf.download(
+        ticker_symbol,
+        start=start_date.strftime("%Y-%m-%d"),
+        end=(start_date + timedelta(days=1)).strftime("%Y-%m-%d"),  # Fin = lendemain pour s'assurer d'avoir la date
+        progress=False,
+        auto_adjust=True
+    )
+
     if data.empty:
-        raise ValueError("Aucune donnée historique disponible.")
+        raise ValueError(f"Aucune donnée disponible pour {ticker_symbol} à la date {start_date}.")
 
-    last_close_price = data["Close"].iloc[-1]  # Dernier prix de clôture
+    # Extraire le prix de clôture d'il y a une semaine
+    last_week_close_price = data["Close"].iloc[0]  # Premier (et seul) élément
+    last_week_close_date = data.index[0].strftime("%Y-%m-%d")
 
-    # 3. Afficher les résultats
     print(f"Ticker: {ticker_symbol}")
-    print(f"Prix actuel (fast_info): {current_price_fast_info} {currency}")
-    print(f"Dernier prix de clôture (history): {last_close_price} {currency}")
-    print(f"Date de la dernière clôture: {data.index[-1].strftime('%Y-%m-%d')}")
-
-    # 4. Vérifier si les prix sont identiques
-    if abs(current_price_fast_info - last_close_price) < 0.01:
-        print("✅ Les prix sont identiques.")
-    else:
-        print("❌ Les prix sont différents.")
-        print(f"Différence: {abs(current_price_fast_info - last_close_price)} {currency}")
+    print(f"Prix de clôture d'il y a une semaine ({last_week_close_date}): {last_week_close_price}")
 
 except Exception as e:
     print(f"Erreur: {e}")
