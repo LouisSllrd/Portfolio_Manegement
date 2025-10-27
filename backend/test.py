@@ -1,7 +1,7 @@
 import yfinance as yf
 from datetime import datetime, timedelta
 
-ticker_symbol = "AAPL"
+ticker_symbol = "DIS"
 
 try:
     # Calculer la date d'il y a une semaine

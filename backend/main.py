@@ -52,6 +52,7 @@ class Portfolio:
             fx_col = f"{currency}USD=X"
             if fx_col in fx_data.columns:
                 df[ticker] = df[ticker] * fx_data[fx_col]
+        print(currencies)
 
         return df
 
@@ -365,3 +366,18 @@ def get_prices(req: PortfolioRequest):
     ]
 
     return {"data": data}
+
+@app.post("/correlation")
+def get_correlation(req: PortfolioRequest):
+    # Crée le portefeuille
+    portfolio = Portfolio(req.start, req.end, req.tickers, req.positions, req.window)
+
+    # Récupère les prix
+    df = portfolio.prices()
+    returns = df.pct_change().dropna()
+
+    # Calcule la corrélation
+    corr = returns.corr()
+
+    # Convertit en format JSON
+    return {"correlation": corr.to_dict()}
