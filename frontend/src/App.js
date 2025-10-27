@@ -42,7 +42,7 @@ function PortfolioDashboard() {
   const fetchMetrics = async () => {
     setLoadingMetrics(true);
     try {
-      const res = await axios.post("http://localhost:8000/metrics", portfolio);
+      const res = await axios.post("http://portfoliomanegement-production.up.railway.app/metrics", portfolio);
       setMetrics(res.data);
 
       if (res.data.portfolio_values && res.data.dates) {
@@ -74,7 +74,7 @@ function PortfolioDashboard() {
 
   const computePieData = async () => {
     try {
-      const res = await axios.post("http://localhost:8000/metrics", portfolio);
+      const res = await axios.post("http://portfoliomanegement-production.up.railway.app/metrics", portfolio);
       if (res.data.latest_prices) {
         const prices = res.data.latest_prices;
         const totalValue = portfolio.positions.reduce(
@@ -110,7 +110,7 @@ function PortfolioDashboard() {
         end: portfolio.end,
       };
   
-      const res = await axios.post("http://localhost:8000/backtest", payload);
+      const res = await axios.post("http://portfoliomanegement-production.up.railway.app/backtest", payload);
       setStrategies(res.data);
     } catch (err) {
       console.error("❌ Error fetching strategies:", err.message);
@@ -167,7 +167,7 @@ function PortfolioDashboard() {
   const [portfolioPrices, setPortfolioPrices] = useState([]);
 
   async function fetchPrices() {
-    const res = await fetch("http://localhost:8000/prices", {
+    const res = await fetch("http://portfoliomanegement-production.up.railway.app/prices", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(portfolio),
