@@ -24,7 +24,7 @@ class Portfolio:
         df = yf.download(self.tickers, start=self.start, end=self.end, progress=False, auto_adjust=True)['Close']
         df = df.dropna(how='all').ffill()
 
-        # --- Récupérer la devise de chaque ticker ---
+        '''# --- Récupérer la devise de chaque ticker ---
         currencies = {}
         for ticker in self.tickers:
             info = yf.Ticker(ticker).info
@@ -39,7 +39,7 @@ class Portfolio:
             fx_ticker = f"{currency}USD=X"  # Exemple: EURUSD=X
             fx = yf.download(fx_ticker, start=self.start, end=self.end, progress=False, auto_adjust=True)['Close']
             fx = fx.ffill().reindex(df.index).fillna(method='ffill')  # aligner les dates
-            df[ticker] = df[ticker] * fx
+            df[ticker] = df[ticker] * fx'''
 
         return df
 
