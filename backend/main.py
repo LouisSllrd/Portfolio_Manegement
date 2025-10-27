@@ -221,8 +221,8 @@ app = FastAPI(title="Portfolio API")
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://portfoliomanegement-production.up.railway.app/",
-    "https://vercel.com/louis-sallards-projects/portfolio-manegement/ADJaruMMRqCX9xG8tLWG3RsGsLEX"
+    "https://portfoliomanegement-production.up.railway.app",
+    "https://portfolio-manegement.vercel.app"
 ]
 
 app.add_middleware(
