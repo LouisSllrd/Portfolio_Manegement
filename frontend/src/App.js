@@ -28,6 +28,8 @@ function PortfolioDashboard() {
   const [constVolParams, setConstVolParams] = useState(defaultConstVolParams);
   const [openStrategyModal, setOpenStrategyModal] = useState(null); // null, "momentum" ou "constvol"
   const [strategyWindow, setStrategyWindow] = useState(portfolio.window);
+  const [correlation, setCorrelation] = useState(null);
+
 
   const [metrics, setMetrics] = useState(null);
   const [returns, setReturns] = useState(null);
@@ -71,12 +73,24 @@ function PortfolioDashboard() {
     }
   };
 
+  const fetchCorrelation = async () => {
+    try {
+      const res = await axios.post(
+        "https://portfoliomanegement-production-e103.up.railway.app/correlation",
+        portfolio
+      );
+      setCorrelation(res.data.correlation);
+    } catch (err) {
+      console.error("❌ Error fetching correlation:", err.message);
+    }
+  };
+  
+
   const computePieData = async () => {
     try {
       const res = await axios.post("https://portfoliomanegement-production-e103.up.railway.app/metrics", portfolio);
       if (res.data.latest_prices) {
         const prices = res.data.latest_prices;
-        console.log(prices)
         const totalValue = portfolio.positions.reduce(
           (acc, pos, i) => acc + pos * prices[i],
           0
@@ -174,7 +188,6 @@ function PortfolioDashboard() {
     });
     const json = await res.json();
 
-    console.log(json)
     setPortfolioPrices(json.data);
   }
 
@@ -385,6 +398,7 @@ function PortfolioDashboard() {
       setLoadingMetrics(true);
       await fetchMetrics();
       await computePieData();
+      await fetchCorrelation();
       setLoadingMetrics(false);
     }}
     style={{
@@ -447,96 +461,165 @@ function PortfolioDashboard() {
 
 
 
+{/* ---- Dashboard Charts Layout ---- */}
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr", // deux colonnes égales
+    gap: 32,
+    alignItems: "flex-start",
+    marginTop: 24,
+  }}
+>
+  {/* --- Colonne gauche (Cumulative Return + Stock Prices) --- */}
+  <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+    {/* --- Chart: Cumulative Return --- */}
+    {returns && (
+      <div>
+        <h3>Cumulative Return from the start of the window</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={returns}>
+            <CartesianGrid stroke="#ccc" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line
+              type="linear"
+              dataKey="value"
+              stroke="#2b6cb0"
+              dot={false}
+              strokeWidth={2}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    )}
 
-          {/* ---- Charts Side by Side ---- */}
-          {returns && pieData.length > 0 && (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                gap: 32,
-                marginTop: 24,
-              }}
+    {/* --- Chart: Stock Prices --- */}
+    <div>
+      <h3>Stock Prices Over Window (USD)</h3>
+      <ResponsiveContainer width="100%" height={400}>
+        <LineChart data={lineChartData}>
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          {portfolio.tickers.map((ticker, i) => (
+            <Line
+              key={ticker}
+              type="monotone"
+              dataKey={ticker}
+              stroke={COLORS[i % COLORS.length]}
+              dot={false}
+            />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  </div>
+
+  {/* --- Colonne droite (PieChart + Correlation Matrix) --- */}
+  <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+    {/* --- Pie Chart: Capital Allocation --- */}
+    {pieData.length > 0 && (
+      <div>
+        <h3>Capital Allocation (%)</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <PieChart>
+            <Pie
+              data={pieData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={100}
+              label={({ name, value }) => `${name}: ${Math.round(value)}%`}
             >
-              <div style={{ flex: 2 }}>
-                <h3>Cumulative Return from the start of the window</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={returns}>
-                    <CartesianGrid stroke="#ccc" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line
-                      type="linear"
-                      dataKey="value"
-                      stroke="#2b6cb0"
-                      dot={false}
-                      strokeWidth={2}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              {pieData.map((entry, i) => (
+                <Cell key={i} fill={COLORS[i % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(value) => `${Math.round(value)}%`} />
+            <Legend
+              verticalAlign="bottom"
+              height={36}
+              formatter={(value, entry) => {
+                const index = pieData.findIndex((d) => d.name === value);
+                const color = COLORS[index % COLORS.length];
+                return <span style={{ color }}>{value}</span>;
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+    )}
 
-              <div style={{ flex: 1 }}>
-  <h3>Capital Allocation (%)</h3>
-  <ResponsiveContainer width="100%" height={300}>
-    <PieChart>
-      <Pie
-        data={pieData}
-        dataKey="value"
-        nameKey="name"
-        cx="50%"
-        cy="50%"
-        outerRadius={100}
-        label={({ name, value }) => `${name}: ${Math.round(value)}%`} // arrondi sans décimale
-      >
-        {pieData.map((entry, i) => (
-          <Cell key={i} fill={COLORS[i % COLORS.length]} />
-        ))}
-      </Pie>
-      <Tooltip formatter={(value) => `${Math.round(value)}%`} /> 
-      <Legend
-        verticalAlign="bottom"
-        height={36}
-        formatter={(value, entry) => {
-          // Cherche l'index du ticker dans pieData pour récupérer la couleur correcte
-          const index = pieData.findIndex(d => d.name === value);
-          const color = COLORS[index % COLORS.length];
-          return <span style={{ color }}>{value}</span>;
-        }}
-      />
-    </PieChart>
-  </ResponsiveContainer>
+    {/* --- Correlation Matrix --- */}
+    {correlation && (
+      <div>
+        <h3>Correlation Matrix</h3>
+        <div style={{ overflowX: "auto" }}>
+          <table
+            style={{
+              borderCollapse: "collapse",
+              width: "100%",
+              textAlign: "center",
+              backgroundColor: "#f8fafc",
+            }}
+          >
+            <thead>
+              <tr>
+                <th></th>
+                {portfolio.tickers.map((ticker) => (
+                  <th key={ticker} style={{ padding: 8 }}>
+                    {ticker}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {portfolio.tickers.map((rowTicker) => (
+                <tr key={rowTicker}>
+                  <td style={{ fontWeight: "bold", padding: 8 }}>
+                    {rowTicker}
+                  </td>
+                  {portfolio.tickers.map((colTicker) => {
+                    const val = correlation[rowTicker]?.[colTicker] ?? 0;
+                    const color =
+                      val >= 0.7
+                        ? "#e53e3e33" 
+                        : val >= 0.4
+                        ? "#f6ad5533" 
+                        : val >= 0.0
+                        ? "#faf08933" 
+                        : val >= -0.4
+                        ? "#68d39133" 
+                        : "#38a16933"; 
+
+                    return (
+                      <td
+                        key={colTicker}
+                        style={{
+                          padding: 8,
+                          backgroundColor: color,
+                          border: "1px solid #e2e8f0",
+                        }}
+                      >
+                        {val.toFixed(2)}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )}
+  </div>
 </div>
 
-
-            </div>
-          )}
-          
-
-<div style={{ flex: 1, marginTop: 32 }}>
-  <h3>Stock Prices Over Window (USD)</h3>
-  <ResponsiveContainer width="100%" height={400}>
-  <LineChart data={lineChartData}>
-    <XAxis dataKey="date" />
-    <YAxis />
-    <Tooltip />
-    <Legend />
-    {portfolio.tickers.map((ticker, i) => (
-      <Line
-        key={ticker}
-        type="monotone"
-        dataKey={ticker}
-        stroke={COLORS[i % COLORS.length]}
-        dot={false}
-      />
-    ))}
-  </LineChart>
-</ResponsiveContainer>
-
-</div>
         </motion.div>
       )}
 
