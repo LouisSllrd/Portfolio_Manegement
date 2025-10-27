@@ -29,7 +29,6 @@ function PortfolioDashboard() {
   const [openStrategyModal, setOpenStrategyModal] = useState(null); // null, "momentum" ou "constvol"
   const [strategyWindow, setStrategyWindow] = useState(portfolio.window);
 
-
   const [metrics, setMetrics] = useState(null);
   const [returns, setReturns] = useState(null);
   const [pieData, setPieData] = useState([]);
@@ -77,6 +76,7 @@ function PortfolioDashboard() {
       const res = await axios.post("https://portfoliomanegement-production-e103.up.railway.app/metrics", portfolio);
       if (res.data.latest_prices) {
         const prices = res.data.latest_prices;
+        console.log(prices)
         const totalValue = portfolio.positions.reduce(
           (acc, pos, i) => acc + pos * prices[i],
           0
@@ -173,6 +173,8 @@ function PortfolioDashboard() {
       body: JSON.stringify(portfolio),
     });
     const json = await res.json();
+
+    console.log(json)
     setPortfolioPrices(json.data);
   }
 
@@ -458,7 +460,7 @@ function PortfolioDashboard() {
               }}
             >
               <div style={{ flex: 2 }}>
-                <h3>Cumulative Return</h3>
+                <h3>Cumulative Return from the start of the window</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={returns}>
                     <CartesianGrid stroke="#ccc" />
@@ -515,7 +517,7 @@ function PortfolioDashboard() {
           
 
 <div style={{ flex: 1, marginTop: 32 }}>
-  <h3>Stock Prices Over Window</h3>
+  <h3>Stock Prices Over Window (USD)</h3>
   <ResponsiveContainer width="100%" height={400}>
   <LineChart data={lineChartData}>
     <XAxis dataKey="date" />
@@ -711,6 +713,7 @@ function PortfolioDashboard() {
     <div
       onClick={(e) => e.stopPropagation()}
       style={{
+        position: 'relative',
         backgroundColor: "white",
         padding: 24,
         borderRadius: 12,
@@ -719,6 +722,24 @@ function PortfolioDashboard() {
         overflowY: "auto",
       }}
     >
+    {/* --- Bouton de fermeture en haut à droite --- */}
+    <button
+      onClick={() => setOpenStrategyModal(null)}
+      style={{
+        position: "absolute",
+        top: 8,
+        right: 8,
+        border: "none",
+        background: "transparent",
+        color: "#666",
+        fontSize: 20,
+        cursor: "pointer",
+        fontWeight: "bold",
+      }}
+      aria-label="Close modal"
+    >
+      ×
+    </button>
       <h3>{openStrategyModal === "momentum" ? "Momentum Strategy" : "Constant Volatility"}</h3>
 
       {openStrategyModal === "momentum" ? (
@@ -782,20 +803,7 @@ H_{i,t}^{\text{new}} = \frac{C_{i,t}}{P_{i,t}}`} />
   </div>
 )}
 
-      <button
-        onClick={() => setOpenStrategyModal(null)}
-        style={{
-          marginTop: 16,
-          padding: "6px 12px",
-          borderRadius: 6,
-          border: "none",
-          backgroundColor: "#2b6cb0",
-          color: "white",
-          cursor: "pointer",
-        }}
-      >
-        Close
-      </button>
+      
     </div>
   </div>
 )}
