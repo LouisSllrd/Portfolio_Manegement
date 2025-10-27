@@ -340,16 +340,28 @@ def backtest(data: dict = Body(...)):
     return {"nav": df.to_dict(orient="records")}
 @app.post("/prices")
 def get_prices(req: PortfolioRequest):
+    # Initialiser le portfolio (suppose que Portfolio est ta classe existante)
     portfolio = Portfolio(None, None, req.tickers, req.positions, req.window)
-    
+
     # Définir start et end à partir de window
     end = pd.Timestamp.today()
     start = end - pd.Timedelta(days=req.window)
     portfolio.start = start.strftime("%Y-%m-%d")
     portfolio.end = end.strftime("%Y-%m-%d")
-    
-    df = portfolio.prices()
-    # transformer en liste de dicts [{date, prices:[...]}]
-    data = [{"date": str(idx.date()), "prices": row.tolist()} for idx, row in df.iterrows()]
-    return {"data": data}
 
+    # Récupérer les prix
+    df = portfolio.prices()
+
+    # Réorganiser les colonnes pour qu'elles soient dans le même ordre que req.tickers
+    df = df[req.tickers]  # <-- Réorganise les colonnes selon l'ordre des tickers
+
+    # Transformer en liste de dictionnaires
+    data = [
+        {
+            "date": str(idx.date()),
+            "prices": row.tolist()  # Maintenant, row.tolist() est dans le bon ordre
+        }
+        for idx, row in df.iterrows()
+    ]
+
+    return {"data": data}
