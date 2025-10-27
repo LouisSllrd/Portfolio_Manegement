@@ -20,28 +20,41 @@ class Portfolio:
         self.window = window
 
     def prices(self):
-        # --- Télécharger les prix ---
+        # Télécharger les prix des tickers
         df = yf.download(self.tickers, start=self.start, end=self.end, progress=False, auto_adjust=True)['Close']
         df = df.dropna(how='all').ffill()
 
-        '''# --- Récupérer la devise de chaque ticker ---
+        # Récupérer les devises de tous les tickers en une seule boucle
         currencies = {}
         for ticker in self.tickers:
-            info = yf.Ticker(ticker).info
-            currencies[ticker] = info.get("currency", "USD")  # default USD
+            try:
+                info = yf.Ticker(ticker).fast_info  # fast_info est plus rapide que .info
+                currencies[ticker] = info.get("currency", "USD")
+            except:
+                currencies[ticker] = "USD"  # default USD si erreur
 
-        # --- Identifier les tickers non-USD ---
+        # Identifier les tickers non-USD
         non_usd_tickers = [t for t, cur in currencies.items() if cur != "USD"]
+        if not non_usd_tickers:
+            return df  # rien à convertir
 
-        # --- Convertir chaque ticker non-USD en USD ---
+        # Télécharger tous les taux de change nécessaires en une seule requête
+        fx_tickers = list(set(f"{cur}USD=X" for cur in currencies.values() if cur != "USD"))
+        if not fx_tickers:
+            return df
+
+        fx_data = yf.download(fx_tickers, start=self.start, end=self.end, progress=False, auto_adjust=True)['Close']
+        fx_data = fx_data.ffill().reindex(df.index, method='ffill')
+
+        # Appliquer la conversion
         for ticker in non_usd_tickers:
             currency = currencies[ticker]
-            fx_ticker = f"{currency}USD=X"  # Exemple: EURUSD=X
-            fx = yf.download(fx_ticker, start=self.start, end=self.end, progress=False, auto_adjust=True)['Close']
-            fx = fx.ffill().reindex(df.index).fillna(method='ffill')  # aligner les dates
-            df[ticker] = df[ticker] * fx'''
+            fx_col = f"{currency}USD=X"
+            if fx_col in fx_data.columns:
+                df[ticker] = df[ticker] * fx_data[fx_col]
 
         return df
+
 
     def positions(self):
         return dict(zip(self.tickers, self.pos))
