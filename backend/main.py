@@ -282,6 +282,11 @@ def get_metrics(req: PortfolioRequest):
     
     portfolio = Portfolio(start.isoformat(), end.isoformat(), req.tickers, req.positions, req.window)
     
+    prices = portfolio.prices()
+
+    # ✅ Réorganiser les colonnes selon l'ordre des tickers envoyés
+    prices = prices[req.tickers]
+
     return {
         "CAGR": portfolio.CAGR()*100,
         "AnnualVolatility": portfolio.annual_volatility()*100,
@@ -291,7 +296,7 @@ def get_metrics(req: PortfolioRequest):
         "CVaR_Historical": portfolio.cvar_historical(),
         "portfolio_values": portfolio.portfolio_values().tolist(),
         "dates": portfolio.portfolio_values().index.strftime("%Y-%m-%d").tolist(),
-        "latest_prices": portfolio.prices().iloc[-1].tolist()
+        "latest_prices": prices.iloc[-1].tolist()  # ✅ ordre cohérent
     }
 
 
@@ -369,15 +374,14 @@ def get_prices(req: PortfolioRequest):
 
 @app.post("/correlation")
 def get_correlation(req: PortfolioRequest):
-    # Crée le portefeuille
     portfolio = Portfolio(req.start, req.end, req.tickers, req.positions, req.window)
 
-    # Récupère les prix
     df = portfolio.prices()
-    returns = df.pct_change().dropna()
 
-    # Calcule la corrélation
+    # ✅ S'assurer que l'ordre correspond à celui du frontend
+    df = df[req.tickers]
+
+    returns = df.pct_change().dropna()
     corr = returns.corr()
 
-    # Convertit en format JSON
     return {"correlation": corr.to_dict()}
