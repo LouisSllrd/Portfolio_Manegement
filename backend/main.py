@@ -8,6 +8,7 @@ import numpy as np
 import yfinance as yf
 from scipy.stats import norm
 from scipy.optimize import minimize
+from routes import backtest_routes
 
 # ------------------ PORTFOLIO CLASS ------------------
 class Portfolio:
@@ -254,6 +255,8 @@ app = FastAPI(title="Portfolio API")
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
     "https://portfoliomanegement-production-e103.up.railway.app",
     "https://portfolio-manegement.vercel.app"
 ]
@@ -385,3 +388,5 @@ def get_correlation(req: PortfolioRequest):
     corr = returns.corr()
 
     return {"correlation": corr.to_dict()}
+
+app.include_router(backtest_routes.router, prefix="/backtest")
