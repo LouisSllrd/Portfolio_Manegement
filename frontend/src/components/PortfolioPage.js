@@ -39,7 +39,7 @@ const defaultPortfolio = {
     const fetchMetrics = async () => {
       setLoadingMetrics(true);
       try {
-        const res = await axios.post("http://portfoliomanegement-production-e103.up.railway.app/metrics", portfolio);
+        const res = await axios.post("https://portfoliomanegement-production-e103.up.railway.app/metrics", portfolio);
         setMetrics(res.data);
   
         if (res.data.portfolio_values && res.data.dates) {
@@ -72,7 +72,7 @@ const defaultPortfolio = {
     const fetchCorrelation = async () => {
       try {
         const res = await axios.post(
-          "http://portfoliomanegement-production-e103.up.railway.app/correlation",
+          "https://portfoliomanegement-production-e103.up.railway.app/correlation",
           portfolio
         );
         setCorrelation(res.data.correlation);
@@ -84,7 +84,7 @@ const defaultPortfolio = {
   
     const computePieData = async () => {
       try {
-        const res = await axios.post("http://portfoliomanegement-production-e103.up.railway.app/metrics", portfolio);
+        const res = await axios.post("https://portfoliomanegement-production-e103.up.railway.app/metrics", portfolio);
         if (res.data.latest_prices) {
           const prices = res.data.latest_prices;
           const totalValue = portfolio.positions.reduce(
@@ -120,7 +120,7 @@ const defaultPortfolio = {
           end: portfolio.end,
         };
     
-        const res = await axios.post("http://portfoliomanegement-production-e103.up.railway.app/backtest", payload);
+        const res = await axios.post("https://portfoliomanegement-production-e103.up.railway.app/backtest", payload);
         setStrategies(res.data);
       } catch (err) {
         console.error("❌ Error fetching strategies:", err.message);
@@ -177,7 +177,7 @@ const defaultPortfolio = {
     const [portfolioPrices, setPortfolioPrices] = useState([]);
   
     async function fetchPrices() {
-      const res = await fetch("http://portfoliomanegement-production-e103.up.railway.app/prices", {
+      const res = await fetch("https://portfoliomanegement-production-e103.up.railway.app/prices", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(portfolio),

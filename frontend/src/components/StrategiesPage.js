@@ -89,7 +89,7 @@ function StrategiesPage() {
     if (!strategyName) return;
   
     axios
-      .get(`http://portfoliomanegement-production-e103.up.railway.app/backtest/strategy_params/${strategyName}`)
+      .get(`https://portfoliomanegement-production-e103.up.railway.app/backtest/strategy_params/${strategyName}`)
       .then((res) => {
         setStrategyParamsSchema(res.data.params);
         
@@ -118,7 +118,7 @@ function StrategiesPage() {
 
     try {
       const metricsRes = await axios.post(
-      "http://portfoliomanegement-production-e103.up.railway.app/backtest/metrics",
+      "https://portfoliomanegement-production-e103.up.railway.app/backtest/metrics",
       payload
     );
 
@@ -138,21 +138,21 @@ function StrategiesPage() {
         );
       }
 
-      const tradesRes = await axios.post("http://portfoliomanegement-production-e103.up.railway.app/backtest/trades", payload);
+      const tradesRes = await axios.post("https://portfoliomanegement-production-e103.up.railway.app/backtest/trades", payload);
       setPriceData(tradesRes.data.price_data);
       setTrades(tradesRes.data.trades);
 
-      const equityRes = await axios.post("http://portfoliomanegement-production-e103.up.railway.app/backtest/equity_curve", payload);
+      const equityRes = await axios.post("https://portfoliomanegement-production-e103.up.railway.app/backtest/equity_curve", payload);
       setEquityCurve(equityRes.data.equity_curve);
       setDates(equityRes.data.dates);
 
-      const bhRes = await axios.post("http://portfoliomanegement-production-e103.up.railway.app/backtest/buy_and_hold", payload);
+      const bhRes = await axios.post("https://portfoliomanegement-production-e103.up.railway.app/backtest/buy_and_hold", payload);
       setBuyHoldCurve(bhRes.data.buy_and_hold);
 
-      const plotRes = await axios.post("http://portfoliomanegement-production-e103.up.railway.app/backtest/plot", payload);
+      const plotRes = await axios.post("https://portfoliomanegement-production-e103.up.railway.app/backtest/plot", payload);
         setPlotBase64(plotRes.data.plot_base64);
 
-        const response = await axios.post("http://portfoliomanegement-production-e103.up.railway.app/backtest/performance_plot", payload);
+        const response = await axios.post("https://portfoliomanegement-production-e103.up.railway.app/backtest/performance_plot", payload);
         setPerformancePlot(response.data.plot_base64);
         
       setIsRunning(false);
