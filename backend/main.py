@@ -258,6 +258,7 @@ origins = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "https://portfoliomanegement-production-e103.up.railway.app",
+    "https://financial-dashboard-training.vercel.app",
     "https://portfolio-manegement.vercel.app"
 ]
 
